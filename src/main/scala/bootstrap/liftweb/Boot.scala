@@ -5,6 +5,9 @@ import net.liftweb.common._
 import net.liftweb.http._
 import net.liftweb.sitemap._
 import Loc._
+import net.liftweb.db.{DefaultConnectionIdentifier, StandardDBVendor}
+import net.liftweb.mapper.{Schemifier, DB}
+import com.webitoria.model.{Color, Country}
 
 /**
  * A class that's instantiated early and run.  It allows the application
@@ -17,20 +20,14 @@ class Boot extends Loggable {
     LiftRules.addToPackages("com.webitoria")
 
     // Build SiteMap
-    val entries = List(
-
+    val sitemap = List(
       Menu.i("Home") / "index", // the simple way to declare a menu
-
-      Menu.i("Test") / "test",
-
-      // more complex because this menu allows anything in the
-      // /static path to be visible
-      Menu(Loc("Static", Link(List("static"), true, "/static/index"), "Static Content"))
-    )
+      Menu.i("Test") / "test"
+    ) ::: Country.menus
 
     // set the sitemap.  Note if you don't want access control for
     // each page, just comment this line out.
-    LiftRules.setSiteMap(SiteMap(entries:_*))
+    LiftRules.setSiteMap(SiteMap(sitemap:_*))
 
     //Show the spinny image when an Ajax call starts
     LiftRules.ajaxStart = Full(() => LiftRules.jsArtifacts.show("ajax-loader").cmd)
@@ -43,6 +40,18 @@ class Boot extends Loggable {
 
     // Use HTML5 for rendering
     LiftRules.htmlProperties.default.set((r: Req) => new Html5Properties(r.userAgent))
+
+
+    // init database connection
+    object DBVendor extends StandardDBVendor(
+        Props.get("db.driver", "org.h2.Driver"),
+        Props.get("db.url", "jdbc:h2:file:database/countries;AUTO_SERVER=TRUE"),
+        Empty, Empty)
+    DB.defineConnectionManager(DefaultConnectionIdentifier, DBVendor)
+    LiftRules.unloadHooks.append( () => DBVendor.closeAllConnections_!() )
+    S.addAround(DB.buildLoanWrapper())
+    Schemifier.schemify(true, Schemifier.infoF _, DefaultConnectionIdentifier, // todo: check run mode
+      Country, Color)
 
     logger.info("APPLICATION STARTED: run.mode = %s".format(Props.mode))
   }

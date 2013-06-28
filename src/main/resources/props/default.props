@@ -1,0 +1,3 @@
+db.driver=org.h2.Driver
+db.url=jdbc:h2:file:database/countries;AUTO_SERVER=TRUE
+xml_data_url=http://www.iso.org/iso/home/standards/country_codes/country_names_and_code_elements_xml.htm

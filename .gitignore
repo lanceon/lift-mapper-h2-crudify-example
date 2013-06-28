@@ -3,3 +3,4 @@ project/
 *.log
 .idea/
 .idea_modules/
+database/*

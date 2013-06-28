@@ -1,2 +1,0 @@
-lift-twitter-bootstrap-template
-===============================
